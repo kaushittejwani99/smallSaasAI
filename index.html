@@ -1,0 +1,102 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SortMyNotes AI</title>
+    <style>
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background-color: #f0f2f5; display: flex; flex-direction: column; align-items: center; padding: 40px 20px; margin: 0; }
+        .container { background: #ffffff; padding: 30px; border-radius: 12px; box-shadow: 0 8px 16px rgba(0,0,0,0.1); width: 100%; max-width: 600px; }
+        h2 { margin-top: 0; color: #1a1a1a; }
+        textarea { width: 100%; height: 120px; padding: 15px; margin-bottom: 20px; border: 1px solid #d1d5db; border-radius: 8px; resize: vertical; box-sizing: border-box; font-size: 15px; font-family: inherit; }
+        textarea:focus { outline: none; border-color: #007bff; box-shadow: 0 0 0 3px rgba(0,123,255,0.25); }
+        button { background-color: #007bff; color: white; border: none; padding: 12px 20px; border-radius: 8px; cursor: pointer; width: 100%; font-size: 16px; font-weight: 600; transition: background 0.2s; }
+        button:hover { background-color: #0056b3; }
+        button:disabled { background-color: #a0c4ff; cursor: not-allowed; }
+        .loader { display: none; text-align: center; margin-top: 20px; font-weight: 500; color: #555; }
+        .result { margin-top: 30px; display: none; border-top: 2px solid #f0f2f5; padding-top: 20px; }
+        .summary-box { background: #f8f9fa; padding: 15px; border-radius: 8px; border-left: 4px solid #007bff; margin-bottom: 20px; color: #333; line-height: 1.5; }
+        .action-items { padding-left: 20px; margin: 0; color: #333; line-height: 1.6; }
+        .action-items li { margin-bottom: 8px; }
+    </style>
+</head>
+<body>
+
+    <div class="container">
+        <h2>SortMyNotes AI ✍️</h2>
+        <p style="color: #666; margin-bottom: 20px;">Apne rough notes, meeting ki baatein, ya random thoughts yahan type karein:</p>
+        
+        <textarea id="messyNotes" placeholder="Jaise: kal subah client call hai 10 baje uske baad gym jana hai..."></textarea>
+        
+        <button id="sortBtn" onclick="processNotes()">Magic Sort 🪄</button>
+        <div id="loader" class="loader">AI aapke notes padh raha hai... ⏳</div>
+
+        <div id="resultBox" class="result">
+            <h3 style="margin-top: 0; color: #1a1a1a;">📝 Summary</h3>
+            <div id="summaryText" class="summary-box"></div>
+            
+            <h3 style="color: #1a1a1a;">✅ Action Items</h3>
+            <ul id="actionList" class="action-items"></ul>
+        </div>
+    </div>
+
+    <!-- Footer yahan add kiya gaya hai -->
+    <p style="text-align: center; margin-top: 25px; color: #666; font-size: 14px; font-weight: 500;">
+        Since 2021 we have served...
+    </p>
+
+    <script>
+        async function processNotes() {
+            const textInput = document.getElementById('messyNotes').value;
+            if (!textInput.trim()) {
+                alert("Pehle textarea me kuch likhiye!");
+                return;
+            }
+
+            // UI ko loading state me daalein
+            document.getElementById('loader').style.display = 'block';
+            document.getElementById('resultBox').style.display = 'none';
+            document.getElementById('sortBtn').disabled = true;
+
+            try {
+                // Backend API ko data bhejein
+                const response = await fetch('/api/sort-notes', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ messyText: textInput })
+                });
+                
+                const resData = await response.json();
+                
+                if (resData.success) {
+                    const { summary, action_items } = resData.data;
+                    
+                    // Summary update karein
+                    document.getElementById('summaryText').innerText = summary;
+                    
+                    // Action items ki list banayein
+                    const actionList = document.getElementById('actionList');
+                    actionList.innerHTML = '';
+                    action_items.forEach(item => {
+                        let li = document.createElement('li');
+                        li.innerText = item;
+                        actionList.appendChild(li);
+                    });
+
+                    // Result box dikhayein
+                    document.getElementById('resultBox').style.display = 'block';
+                } else {
+                    alert("Error: " + resData.error);
+                }
+            } catch (error) {
+                alert("Backend se connect nahi ho paya. Kya server chal raha hai?");
+                console.error(error);
+            } finally {
+                // UI reset karein
+                document.getElementById('loader').style.display = 'none';
+                document.getElementById('sortBtn').disabled = false;
+            }
+        }
+    </script>
+</body>
+</html>
